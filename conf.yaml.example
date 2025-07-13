@@ -7,3 +7,17 @@ BASIC_MODEL:
   base_url: https://ark.cn-beijing.volces.com/api/v3
   model: "doubao-1-5-pro-32k-250115"
   api_key: xxxx
+
+# Directory for the RAG database
+RAG_DB_DIR: ./rag_db
+
+# Example for using Groq models via litellm
+# BASIC_MODEL:
+#   model: "groq/llama3-8b-8192"
+#   api_key: YOUR_GROQ_API_KEY
+
+# Optional: path to SQLite metadata database
+SQL_DB_PATH: ./rag_metadata.db
+
+# spaCy language model for legal NLP
+SPACY_MODEL: en_core_web_sm
