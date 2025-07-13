@@ -108,7 +108,13 @@ Please refer to the [Configuration Guide](docs/configuration_guide.md) for more 
 > [!NOTE]
 > Before you start the project, read the guide carefully, and update the configurations to match your specific settings and requirements.
 
-### Console UI
+### One-Click Deployment
+To quickly set up and launch DeerFlow, run:
+```bash
+./deploy.sh
+```
+
+
 
 The quickest way to run the project is to use the console UI.
 
@@ -172,13 +178,17 @@ SEARCH_API=tavily
     - Support for open source models like Qwen
     - OpenAI-compatible API interface
     - Multi-tier LLM system for different task complexities
-
+    - Built-in support for Groq, TogetherAI, and LocalAI models
 ### Tools and MCP Integrations
 
 - 🔍 **Search and Retrieval**
     - Web search via Tavily, Brave Search and more
+    - Built-in RAG database for context retrieval
+    - Reports can be saved to the RAG database with metadata
+    - SQL queries supported for stored documents
     - Crawling with Jina
     - Advanced content extraction
+    - spaCy-powered legal NLP utilities
 
 - 🔗 **MCP Seamless Integration**
     - Expand capabilities for private domain access, knowledge graph, web browsing and more
@@ -201,6 +211,11 @@ SEARCH_API=tavily
     - AI-powered podcast script generation and audio synthesis
     - Automated creation of simple PowerPoint presentations
     - Customizable templates for tailored content
+
+### RAG Database
+DeerFlow now ships with a simple retrieval-augmented generation database built with [Chroma](https://www.trychroma.com/). See [docs/rag_integration.md](docs/rag_integration.md) for usage.
+It integrates with LangChain and includes a SQLite metadata database. You can
+store research reports and query them using SQL.
 
 
 ## Architecture

@@ -99,3 +99,46 @@ BASIC_MODEL:
   api_version: $AZURE_API_VERSION
   api_key: $AZURE_API_KEY
 ```
+
+### How to use Groq models?
+DeerFlow integrates Groq models via [litellm](https://docs.litellm.ai/docs/providers/groq). Example configuration:
+```yaml
+BASIC_MODEL:
+  model: "groq/llama3-8b-8192"
+  api_key: $GROQ_API_KEY
+```
+
+### How to use TogetherAI models?
+DeerFlow integrates TogetherAI models via [litellm TogetherAI](https://docs.litellm.ai/docs/providers/together_ai).
+```yaml
+BASIC_MODEL:
+  model: "together_ai/mistralai/Mixtral-8x7B-Instruct-v0.1"
+  api_key: $TOGETHER_API_KEY
+```
+
+### How to use LocalAI models?
+DeerFlow can connect to a LocalAI deployment using the OpenAI-compatible interface.
+```yaml
+BASIC_MODEL:
+  model: "localai/your-model"
+  base_url: "http://localhost:8080/v1"
+```
+
+### RAG Database Configuration
+The RAG database stores vectors in the directory specified by `RAG_DB_DIR` in `conf.yaml`:
+```yaml
+RAG_DB_DIR: "./rag_db"
+```
+Set this path to control where Chroma stores its data.
+
+### Metadata Database
+`SQL_DB_PATH` defines where the SQLite metadata database is stored:
+```yaml
+SQL_DB_PATH: "./rag_metadata.db"
+```
+
+### spaCy Model
+Specify the spaCy language model used for legal document processing:
+```yaml
+SPACY_MODEL: "en_core_web_sm"
+```
