@@ -3,6 +3,7 @@
 
 import { motion } from "framer-motion";
 import { FastForward, Play } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useRef, useState } from "react";
 
 import { RainbowText } from "~/components/deer-flow/rainbow-text";
@@ -15,9 +16,9 @@ import {
 } from "~/components/ui/card";
 import { fastForwardReplay } from "~/core/api";
 import { useReplayMetadata } from "~/core/api/hooks";
-import type { Option } from "~/core/messages";
+import type { Option, Resource } from "~/core/messages";
 import { useReplay } from "~/core/replay";
-import { sendMessage, useStore } from "~/core/store";
+import { sendMessage, useMessageIds, useStore } from "~/core/store";
 import { env } from "~/env";
 import { cn } from "~/lib/utils";
 
@@ -27,7 +28,9 @@ import { MessageListView } from "./message-list-view";
 import { Welcome } from "./welcome";
 
 export function MessagesBlock({ className }: { className?: string }) {
-  const messageCount = useStore((state) => state.messageIds.length);
+  const t = useTranslations("chat.messages");
+  const messageIds = useMessageIds();
+  const messageCount = messageIds.length;
   const responding = useStore((state) => state.responding);
   const { isReplay } = useReplay();
   const { title: replayTitle, hasError: replayHasError } = useReplayMetadata();
@@ -35,7 +38,13 @@ export function MessagesBlock({ className }: { className?: string }) {
   const abortControllerRef = useRef<AbortController | null>(null);
   const [feedback, setFeedback] = useState<{ option: Option } | null>(null);
   const handleSend = useCallback(
-    async (message: string, options?: { interruptFeedback?: string }) => {
+    async (
+      message: string,
+      options?: {
+        interruptFeedback?: string;
+        resources?: Array<Resource>;
+      },
+    ) => {
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
       try {
@@ -44,6 +53,7 @@ export function MessagesBlock({ className }: { className?: string }) {
           {
             interruptFeedback:
               options?.interruptFeedback ?? feedback?.option.value,
+            resources: options?.resources,
           },
           {
             abortSignal: abortController.signal,
@@ -122,20 +132,38 @@ export function MessagesBlock({ className }: { className?: string }) {
               )}
             >
               <div className="flex items-center justify-between">
-                <div className="flex-grow">
-                  <CardHeader>
+                <div className="flex flex-grow items-center">
+                  {responding && (
+                    <motion.div
+                      className="ml-3"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <video
+                        // Walking deer animation, designed by @liangzhaojun. Thank you for creating it!
+                        src="/images/walking_deer.webm"
+                        autoPlay
+                        loop
+                        muted
+                        className="h-[42px] w-[42px] object-contain"
+                      />
+                    </motion.div>
+                  )}
+                  <CardHeader className={cn("flex-grow", responding && "pl-3")}>
                     <CardTitle>
                       <RainbowText animated={responding}>
-                        {responding ? "Replaying" : `${replayTitle}`}
+                        {responding ? t("replaying") : `${replayTitle}`}
                       </RainbowText>
                     </CardTitle>
                     <CardDescription>
                       <RainbowText animated={responding}>
                         {responding
-                          ? "DeerFlow is now replaying the conversation..."
+                          ? t("replayDescription")
                           : replayStarted
-                            ? "The replay has been stopped."
-                            : `You're now in DeerFlow's replay mode. Click the "Play" button on the right to start.`}
+                            ? t("replayHasStopped")
+                            : t("replayModeDescription")}
                       </RainbowText>
                     </CardDescription>
                   </CardHeader>
@@ -149,13 +177,13 @@ export function MessagesBlock({ className }: { className?: string }) {
                         onClick={handleFastForwardReplay}
                       >
                         <FastForward size={16} />
-                        Fast Forward
+                        {t("fastForward")}
                       </Button>
                     )}
                     {!replayStarted && (
                       <Button className="w-24" onClick={handleStartReplay}>
                         <Play size={16} />
-                        Play
+                        {t("play")}
                       </Button>
                     )}
                   </div>
@@ -164,17 +192,16 @@ export function MessagesBlock({ className }: { className?: string }) {
             </Card>
             {!replayStarted && env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY && (
               <div className="text-muted-foreground w-full text-center text-xs">
-                * This site is for demo purposes only. If you want to try your
-                own question, please{" "}
+                {t("demoNotice")}{" "}
                 <a
                   className="underline"
                   href="https://github.com/bytedance/deer-flow"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  click here
+                  {t("clickHere")}
                 </a>{" "}
-                to clone it locally and run it.
+                {t("cloneLocally")}
               </div>
             )}
           </motion.div>

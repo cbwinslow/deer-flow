@@ -6,11 +6,13 @@ dist/
 wheels/
 *.egg-info
 .coverage
+.coverage.*
 agent_history.gif
 static/browser_history/*.gif
 
 # Virtual environments
 .venv
+venv/
 
 # Environment variables
 .env
@@ -21,3 +23,6 @@ conf.yaml
 .idea/
 .langgraph_api/
 
+# coverage report
+coverage.xml
+coverage/

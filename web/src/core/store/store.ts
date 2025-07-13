@@ -4,9 +4,10 @@
 import { nanoid } from "nanoid";
 import { toast } from "sonner";
 import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 
 import { chatStream, generatePodcast } from "../api";
-import type { Message } from "../messages";
+import type { Message, Resource } from "../messages";
 import { mergeMessage } from "../messages";
 import { parseJSON } from "../utils";
 
@@ -77,8 +78,10 @@ export async function sendMessage(
   content?: string,
   {
     interruptFeedback,
+    resources,
   }: {
     interruptFeedback?: string;
+    resources?: Array<Resource>;
   } = {},
   options: { abortSignal?: AbortSignal } = {},
 ) {
@@ -89,6 +92,7 @@ export async function sendMessage(
       role: "user",
       content: content,
       contentChunks: [content],
+      resources,
     });
   }
 
@@ -98,11 +102,15 @@ export async function sendMessage(
     {
       thread_id: THREAD_ID,
       interrupt_feedback: interruptFeedback,
+      resources,
       auto_accepted_plan: settings.autoAcceptedPlan,
+      enable_deep_thinking: settings.enableDeepThinking ?? false,
       enable_background_investigation:
         settings.enableBackgroundInvestigation ?? true,
       max_plan_iterations: settings.maxPlanIterations,
       max_step_num: settings.maxStepNum,
+      max_search_results: settings.maxSearchResults,
+      report_style: settings.reportStyle,
       mcp_settings: settings.mcpSettings,
     },
     options,
@@ -125,6 +133,8 @@ export async function sendMessage(
           role: data.role,
           content: "",
           contentChunks: [],
+          reasoningContent: "",
+          reasoningContentChunks: [],
           isStreaming: true,
           interruptFeedback,
         };
@@ -289,11 +299,33 @@ export async function listenToPodcast(researchId: string) {
         agent: "podcast",
         content: JSON.stringify(podcastObject),
         contentChunks: [],
+        reasoningContent: "",
+        reasoningContentChunks: [],
         isStreaming: true,
       };
       appendMessage(podcastMessage);
       // Generating podcast...
-      const audioUrl = await generatePodcast(reportMessage.content);
+      let audioUrl: string | undefined;
+      try {
+        audioUrl = await generatePodcast(reportMessage.content);
+      } catch (e) {
+        console.error(e);
+        useStore.setState((state) => ({
+          messages: new Map(useStore.getState().messages).set(
+            podCastMessageId,
+            {
+              ...state.messages.get(podCastMessageId)!,
+              content: JSON.stringify({
+                ...podcastObject,
+                error: e instanceof Error ? e.message : "Unknown error",
+              }),
+              isStreaming: false,
+            },
+          ),
+        }));
+        toast("An error occurred while generating podcast. Please try again.");
+        return;
+      }
       useStore.setState((state) => ({
         messages: new Map(useStore.getState().messages).set(podCastMessageId, {
           ...state.messages.get(podCastMessageId)!,
@@ -305,17 +337,65 @@ export async function listenToPodcast(researchId: string) {
   }
 }
 
-export function useResearchTitle(researchId: string) {
-  const planMessage = useMessage(
-    useStore.getState().researchPlanIds.get(researchId),
+export function useResearchMessage(researchId: string) {
+  return useStore(
+    useShallow((state) => {
+      const messageId = state.researchPlanIds.get(researchId);
+      return messageId ? state.messages.get(messageId) : undefined;
+    }),
   );
-  return planMessage
-    ? parseJSON(planMessage.content, { title: "" }).title
-    : undefined;
 }
 
 export function useMessage(messageId: string | null | undefined) {
-  return useStore((state) =>
-    messageId ? state.messages.get(messageId) : undefined,
+  return useStore(
+    useShallow((state) =>
+      messageId ? state.messages.get(messageId) : undefined,
+    ),
+  );
+}
+
+export function useMessageIds() {
+  return useStore(useShallow((state) => state.messageIds));
+}
+
+export function useLastInterruptMessage() {
+  return useStore(
+    useShallow((state) => {
+      if (state.messageIds.length >= 2) {
+        const lastMessage = state.messages.get(
+          state.messageIds[state.messageIds.length - 1]!,
+        );
+        return lastMessage?.finishReason === "interrupt" ? lastMessage : null;
+      }
+      return null;
+    }),
+  );
+}
+
+export function useLastFeedbackMessageId() {
+  const waitingForFeedbackMessageId = useStore(
+    useShallow((state) => {
+      if (state.messageIds.length >= 2) {
+        const lastMessage = state.messages.get(
+          state.messageIds[state.messageIds.length - 1]!,
+        );
+        if (lastMessage && lastMessage.finishReason === "interrupt") {
+          return state.messageIds[state.messageIds.length - 2];
+        }
+      }
+      return null;
+    }),
+  );
+  return waitingForFeedbackMessageId;
+}
+
+export function useToolCalls() {
+  return useStore(
+    useShallow((state) => {
+      return state.messageIds
+        ?.map((id) => getMessage(id)?.toolCalls)
+        .filter((toolCalls) => toolCalls != null)
+        .flat();
+    }),
   );
 }

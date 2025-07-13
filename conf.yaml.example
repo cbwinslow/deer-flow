@@ -1,23 +1,12 @@
 # [!NOTE]
-# Read the `docs/configuration_guide.md` carefully, and update the configurations to match your specific settings and requirements.
-# - Replace `api_key` with your own credentials
-# - Replace `base_url` and `model` name if you want to use a custom model
+# Read the `docs/configuration_guide.md` carefully, and update the
+# configurations to match your specific settings and requirements.
+# - Replace `api_key` with your own credentials.
+# - Replace `base_url` and `model` name if you want to use a custom model.
+# - Set `verify_ssl` to `false` if your LLM server uses self-signed certificates
+# - A restart is required every time you change the `config.yaml` file.
 
 BASIC_MODEL:
   base_url: https://ark.cn-beijing.volces.com/api/v3
   model: "doubao-1-5-pro-32k-250115"
   api_key: xxxx
-
-# Directory for the RAG database
-RAG_DB_DIR: ./rag_db
-
-# Example for using Groq models via litellm
-# BASIC_MODEL:
-#   model: "groq/llama3-8b-8192"
-#   api_key: YOUR_GROQ_API_KEY
-
-# Optional: path to SQLite metadata database
-SQL_DB_PATH: ./rag_metadata.db
-
-# spaCy language model for legal NLP
-SPACY_MODEL: en_core_web_sm

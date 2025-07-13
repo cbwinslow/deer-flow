@@ -49,7 +49,7 @@ BASIC_MODEL:
 BASIC_MODEL:
   base_url: "https://api.deepseek.com"
   model: "deepseek-chat"
-  api_key: YOU_API_KEY
+  api_key: YOUR_API_KEY
 
 # An example of Google Gemini models using OpenAI-Compatible interface
 BASIC_MODEL:
@@ -58,15 +58,31 @@ BASIC_MODEL:
   api_key: YOUR_API_KEY
 ```
 
-### How to use Ollama models?
+### How to use models with self-signed SSL certificates?
 
-DeerFlow supports the integration of Ollama models. You can refer to [litellm Ollama](https://docs.litellm.ai/docs/providers/ollama). <br>
-The following is a configuration example of `conf.yaml` for using Ollama models:
+If your LLM server uses self-signed SSL certificates, you can disable SSL certificate verification by adding the `verify_ssl: false` parameter to your model configuration:
 
 ```yaml
 BASIC_MODEL:
-  model: "ollama/ollama-model-name"
-  base_url: "http://localhost:11434" # Local service address of Ollama, which can be started/viewed via ollama serve
+  base_url: "https://your-llm-server.com/api/v1"
+  model: "your-model-name"
+  api_key: YOUR_API_KEY
+  verify_ssl: false  # Disable SSL certificate verification for self-signed certificates
+```
+
+> [!WARNING]
+> Disabling SSL certificate verification reduces security and should only be used in development environments or when you trust the LLM server. In production environments, it's recommended to use properly signed SSL certificates.
+
+### How to use Ollama models?
+
+DeerFlow supports the integration of Ollama models. You can refer to [litellm Ollama](https://docs.litellm.ai/docs/providers/ollama). <br>
+The following is a configuration example of `conf.yaml` for using Ollama models(you might need to run the 'ollama serve' first):
+
+```yaml
+BASIC_MODEL:
+  model: "model-name"  # Model name, which supports the completions API(important), such as: qwen3:8b, mistral-small3.1:24b, qwen2.5:3b
+  base_url: "http://localhost:11434/v1" # Local service address of Ollama, which can be started/viewed via ollama serve
+  api_key: "whatever"  # Mandatory, fake api_key with a random string you like :-)
 ```
 
 ### How to use OpenRouter models?
@@ -89,56 +105,14 @@ BASIC_MODEL:
 
 Note: The available models and their exact names may change over time. Please verify the currently available models and their correct identifiers in [OpenRouter's official documentation](https://openrouter.ai/docs).
 
-### How to use Azure models?
 
-DeerFlow supports the integration of Azure models. You can refer to [litellm Azure](https://docs.litellm.ai/docs/providers/azure). Configuration example of `conf.yaml`:
+### How to use Azure OpenAI chat models?
+
+DeerFlow supports the integration of Azure OpenAI chat models. You can refer to [AzureChatOpenAI](https://python.langchain.com/api_reference/openai/chat_models/langchain_openai.chat_models.azure.AzureChatOpenAI.html). Configuration example of `conf.yaml`:
 ```yaml
 BASIC_MODEL:
   model: "azure/gpt-4o-2024-08-06"
-  api_base: $AZURE_API_BASE
-  api_version: $AZURE_API_VERSION
-  api_key: $AZURE_API_KEY
-```
-
-### How to use Groq models?
-DeerFlow integrates Groq models via [litellm](https://docs.litellm.ai/docs/providers/groq). Example configuration:
-```yaml
-BASIC_MODEL:
-  model: "groq/llama3-8b-8192"
-  api_key: $GROQ_API_KEY
-```
-
-### How to use TogetherAI models?
-DeerFlow integrates TogetherAI models via [litellm TogetherAI](https://docs.litellm.ai/docs/providers/together_ai).
-```yaml
-BASIC_MODEL:
-  model: "together_ai/mistralai/Mixtral-8x7B-Instruct-v0.1"
-  api_key: $TOGETHER_API_KEY
-```
-
-### How to use LocalAI models?
-DeerFlow can connect to a LocalAI deployment using the OpenAI-compatible interface.
-```yaml
-BASIC_MODEL:
-  model: "localai/your-model"
-  base_url: "http://localhost:8080/v1"
-```
-
-### RAG Database Configuration
-The RAG database stores vectors in the directory specified by `RAG_DB_DIR` in `conf.yaml`:
-```yaml
-RAG_DB_DIR: "./rag_db"
-```
-Set this path to control where Chroma stores its data.
-
-### Metadata Database
-`SQL_DB_PATH` defines where the SQLite metadata database is stored:
-```yaml
-SQL_DB_PATH: "./rag_metadata.db"
-```
-
-### spaCy Model
-Specify the spaCy language model used for legal document processing:
-```yaml
-SPACY_MODEL: "en_core_web_sm"
+  azure_endpoint: $AZURE_OPENAI_ENDPOINT
+  api_version: $OPENAI_API_VERSION
+  api_key: $AZURE_OPENAI_API_KEY
 ```
