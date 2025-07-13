@@ -13,56 +13,60 @@ import "katex/dist/katex.min.css";
 
 import { Button } from "~/components/ui/button";
 import { rehypeSplitWordsIntoSpans } from "~/core/rehype";
+import { autoFixMarkdown } from "~/core/utils/markdown";
 import { cn } from "~/lib/utils";
 
 import Image from "./image";
 import { Tooltip } from "./tooltip";
+import { Link } from "./link";
 
 export function Markdown({
   className,
   children,
   style,
   enableCopy,
-  animate = false,
+  animated = false,
+  checkLinkCredibility = false,
   ...props
 }: ReactMarkdownOptions & {
   className?: string;
   enableCopy?: boolean;
   style?: React.CSSProperties;
-  animate?: boolean;
+  animated?: boolean;
+  checkLinkCredibility?: boolean;
 }) {
+  const components: ReactMarkdownOptions["components"] = useMemo(() => {
+    return {
+      a: ({ href, children }) => (
+        <Link href={href} checkLinkCredibility={checkLinkCredibility}>
+          {children}
+        </Link>
+      ),
+      img: ({ src, alt }) => (
+        <a href={src as string} target="_blank" rel="noopener noreferrer">
+          <Image className="rounded" src={src as string} alt={alt ?? ""} />
+        </a>
+      ),
+    };
+  }, [checkLinkCredibility]);
+
   const rehypePlugins = useMemo(() => {
-    if (animate) {
+    if (animated) {
       return [rehypeKatex, rehypeSplitWordsIntoSpans];
     }
     return [rehypeKatex];
-  }, [animate]);
+  }, [animated]);
   return (
-    <div
-      className={cn(
-        className,
-        "prose dark:prose-invert prose-p:my-0 prose-img:mt-0 flex flex-col gap-4",
-      )}
-      style={style}
-    >
+    <div className={cn(className, "prose dark:prose-invert")} style={style}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={rehypePlugins}
-        components={{
-          a: ({ href, children }) => (
-            <a href={href} target="_blank" rel="noopener noreferrer">
-              {children}
-            </a>
-          ),
-          img: ({ src, alt }) => (
-            <a href={src as string} target="_blank" rel="noopener noreferrer">
-              <Image className="rounded" src={src as string} alt={alt ?? ""} />
-            </a>
-          ),
-        }}
+        components={components}
         {...props}
       >
-        {dropMarkdownQuote(processKatexInMarkdown(children))}
+        {autoFixMarkdown(
+          dropMarkdownQuote(processKatexInMarkdown(children ?? "")) ?? "",
+        )}
       </ReactMarkdown>
       {enableCopy && typeof children === "string" && (
         <div className="flex">
@@ -118,11 +122,47 @@ function processKatexInMarkdown(markdown?: string | null) {
   return markdownWithKatexSyntax;
 }
 
-function dropMarkdownQuote(markdown?: string | null) {
-  if (!markdown) return markdown;
-  return markdown
-    .replace(/^```markdown\n/gm, "")
-    .replace(/^```text\n/gm, "")
-    .replace(/^```\n/gm, "")
-    .replace(/\n```$/gm, "");
+function dropMarkdownQuote(markdown?: string | null): string | null {
+  if (!markdown) return null;
+
+  const patternsToRemove = [
+    { prefix: "```markdown\n", suffix: "\n```", prefixLen: 12 },
+    { prefix: "```text\n", suffix: "\n```", prefixLen: 8 },
+    { prefix: "```\n", suffix: "\n```", prefixLen: 4 },
+  ];
+
+  let result = markdown;
+  
+  for (const { prefix, suffix, prefixLen } of patternsToRemove) {
+    if (result.startsWith(prefix) && !result.endsWith(suffix)) {
+      result = result.slice(prefixLen);
+      break;  // remove prefix without suffix only once
+    }
+  }
+  
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    
+    for (const { prefix, suffix, prefixLen } of patternsToRemove) {
+      let startIndex = 0;
+      while ((startIndex = result.indexOf(prefix, startIndex)) !== -1) {
+        const endIndex = result.indexOf(suffix, startIndex + prefixLen);
+        if (endIndex !== -1) {
+          // only remove fully matched code blocks
+          const before = result.slice(0, startIndex);
+          const content = result.slice(startIndex + prefixLen, endIndex);
+          const after = result.slice(endIndex + suffix.length);
+          result = before + content + after;
+          changed = true;
+          startIndex = before.length + content.length;
+        } else {
+          startIndex += prefixLen;
+        }
+      }
+    }
+  }
+  
+  return result;
 }

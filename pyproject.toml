@@ -32,19 +32,23 @@ dependencies = [
     "arxiv>=2.2.0",
     "mcp>=1.6.0",
     "langchain-mcp-adapters>=0.0.9",
-    "chromadb>=0.4.24",
-    "sentence-transformers>=0.4.2",
-    "spacy>=3.7.3"
+
 ]
 
 [project.optional-dependencies]
 dev = [
+    "ruff",
     "black>=24.2.0",
+    "langgraph-cli[inmem]>=0.2.10",
 ]
 test = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
+    "pytest-asyncio>=1.0.0",
 ]
+
+[tool.uv]
+required-version = ">=0.6.15"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -54,6 +58,9 @@ filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::UserWarning",
 ]
+
+[tool.coverage.report]
+fail_under = 25
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]

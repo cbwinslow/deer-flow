@@ -1,7 +1,8 @@
 // Copyright (c) 2025 Bytedance Ltd. and/or its affiliates
 // SPDX-License-Identifier: MIT
 
-import { Check, Copy, Headphones, X } from "lucide-react";
+import { Check, Copy, Headphones, Pencil, Undo2, X, Download } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 
 import { ScrollContainer } from "~/components/deer-flow/scroll-container";
@@ -23,6 +24,7 @@ export function ResearchBlock({
   className?: string;
   researchId: string | null;
 }) {
+  const t = useTranslations("chat.research");
   const reportId = useStore((state) =>
     researchId ? state.researchReportIds.get(researchId) : undefined,
   );
@@ -47,6 +49,7 @@ export function ResearchBlock({
     await listenToPodcast(researchId);
   }, [researchId]);
 
+  const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
   const handleCopy = useCallback(() => {
     if (!reportId) {
@@ -63,6 +66,37 @@ export function ResearchBlock({
     }, 1000);
   }, [reportId]);
 
+  // Download report as markdown
+  const handleDownload = useCallback(() => {
+    if (!reportId) {
+      return;
+    }
+    const report = useStore.getState().messages.get(reportId);
+    if (!report) {
+      return;
+    }
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+    const filename = `research-report-${timestamp}.md`;
+    const blob = new Blob([report.content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
+  }, [reportId]);
+
+    
+  const handleEdit = useCallback(() => {
+    setEditing((editing) => !editing);
+  }, []);
+
   // When the research id changes, set the active tab to activities
   useEffect(() => {
     if (!hasReport) {
@@ -76,7 +110,7 @@ export function ResearchBlock({
         <div className="absolute right-4 flex h-9 items-center justify-center">
           {hasReport && !reportStreaming && (
             <>
-              <Tooltip title="Generate podcast">
+              <Tooltip title={t("generatePodcast")}>
                 <Button
                   className="text-gray-400"
                   size="icon"
@@ -87,7 +121,18 @@ export function ResearchBlock({
                   <Headphones />
                 </Button>
               </Tooltip>
-              <Tooltip title="Copy">
+              <Tooltip title={t("edit")}>
+                <Button
+                  className="text-gray-400"
+                  size="icon"
+                  variant="ghost"
+                  disabled={isReplay}
+                  onClick={handleEdit}
+                >
+                  {editing ? <Undo2 /> : <Pencil />}
+                </Button>
+              </Tooltip>
+              <Tooltip title={t("copy")}>
                 <Button
                   className="text-gray-400"
                   size="icon"
@@ -97,9 +142,19 @@ export function ResearchBlock({
                   {copied ? <Check /> : <Copy />}
                 </Button>
               </Tooltip>
+              <Tooltip title={t("downloadReport")}>
+                <Button
+                  className="text-gray-400"
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleDownload}
+                >
+                  <Download />
+                </Button>
+              </Tooltip>
             </>
           )}
-          <Tooltip title="Close">
+          <Tooltip title={t("close")}>
             <Button
               className="text-gray-400"
               size="sm"
@@ -124,10 +179,10 @@ export function ResearchBlock({
                 value="report"
                 disabled={!hasReport}
               >
-                Report
+                {t("report")}
               </TabsTrigger>
               <TabsTrigger className="px-8" value="activities">
-                Activities
+                {t("activities")}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -147,6 +202,7 @@ export function ResearchBlock({
                   className="mt-4"
                   researchId={researchId}
                   messageId={reportId}
+                  editing={editing}
                 />
               )}
             </ScrollContainer>

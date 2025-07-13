@@ -1,12 +1,11 @@
 # Copyright (c) 2025 Bytedance Ltd. and/or its affiliates
 # SPDX-License-Identifier: MIT
 
-import operator
-from typing import Annotated
 
 from langgraph.graph import MessagesState
 
 from src.prompts.planner_model import Plan
+from src.rag import Resource
 
 
 class State(MessagesState):
@@ -14,7 +13,9 @@ class State(MessagesState):
 
     # Runtime Variables
     locale: str = "en-US"
+    research_topic: str = ""
     observations: list[str] = []
+    resources: list[Resource] = []
     plan_iterations: int = 0
     current_plan: Plan | str = None
     final_report: str = ""

@@ -3,6 +3,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Settings } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -25,13 +26,19 @@ import type { Tab } from "./types";
 
 const generalFormSchema = z.object({
   autoAcceptedPlan: z.boolean(),
-  enableBackgroundInvestigation: z.boolean(),
   maxPlanIterations: z.number().min(1, {
     message: "Max plan iterations must be at least 1.",
   }),
   maxStepNum: z.number().min(1, {
     message: "Max step number must be at least 1.",
   }),
+  maxSearchResults: z.number().min(1, {
+    message: "Max search results must be at least 1.",
+  }),
+  // Others
+  enableBackgroundInvestigation: z.boolean(),
+  enableDeepThinking: z.boolean(),
+  reportStyle: z.enum(["academic", "popular_science", "news", "social_media"]),
 });
 
 export const GeneralTab: Tab = ({
@@ -41,6 +48,7 @@ export const GeneralTab: Tab = ({
   settings: SettingsState;
   onChange: (changes: Partial<SettingsState>) => void;
 }) => {
+  const t = useTranslations("settings.general");
   const generalSettings = useMemo(() => settings.general, [settings]);
   const form = useForm<z.infer<typeof generalFormSchema>>({
     resolver: zodResolver(generalFormSchema, undefined, undefined),
@@ -69,7 +77,7 @@ export const GeneralTab: Tab = ({
   return (
     <div className="flex flex-col gap-4">
       <header>
-        <h1 className="text-lg font-medium">General</h1>
+        <h1 className="text-lg font-medium">{t("title")}</h1>
       </header>
       <main>
         <Form {...form}>
@@ -87,7 +95,7 @@ export const GeneralTab: Tab = ({
                         onCheckedChange={field.onChange}
                       />
                       <Label className="text-sm" htmlFor="autoAcceptedPlan">
-                        Allow automatic acceptance of plans
+                        {t("autoAcceptPlan")}
                       </Label>
                     </div>
                   </FormControl>
@@ -99,7 +107,7 @@ export const GeneralTab: Tab = ({
               name="maxPlanIterations"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Max plan iterations</FormLabel>
+                  <FormLabel>{t("maxPlanIterations")}</FormLabel>
                   <FormControl>
                     <Input
                       className="w-60"
@@ -112,8 +120,7 @@ export const GeneralTab: Tab = ({
                     />
                   </FormControl>
                   <FormDescription>
-                    Set to 1 for single-step planning. Set to 2 or more to
-                    enable re-planning.
+                    {t("maxPlanIterationsDescription")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -124,7 +131,29 @@ export const GeneralTab: Tab = ({
               name="maxStepNum"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Max steps of a research plan</FormLabel>
+                  <FormLabel>{t("maxStepsOfPlan")}</FormLabel>
+                  <FormControl>
+                    <Input
+                      className="w-60"
+                      type="number"
+                      defaultValue={field.value}
+                      min={1}
+                      onChange={(event) =>
+                        field.onChange(parseInt(event.target.value || "0"))
+                      }
+                    />
+                  </FormControl>
+                  <FormDescription>{t("maxStepsDescription")}</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="maxSearchResults"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("maxSearchResults")}</FormLabel>
                   <FormControl>
                     <Input
                       className="w-60"
@@ -137,7 +166,7 @@ export const GeneralTab: Tab = ({
                     />
                   </FormControl>
                   <FormDescription>
-                    By default, each research plan has 3 steps.
+                    {t("maxSearchResultsDescription")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -149,5 +178,5 @@ export const GeneralTab: Tab = ({
     </div>
   );
 };
-GeneralTab.displayName = "";
+GeneralTab.displayName = "General";
 GeneralTab.icon = Settings;
