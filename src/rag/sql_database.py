@@ -32,5 +32,4 @@ class SQLDatabase:
 
     def query(self, sql: str) -> list[tuple[Any, ...]]:
         cur = self.conn.execute(sql)
-        rows = cur.fetchall()
-        return rows
+        return cur.fetchall()
